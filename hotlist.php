@@ -177,23 +177,28 @@ class Api
     ];
   }
    
-// 知乎热榜  热度
-function zhihuHot()
-{
-  $_resHtml = str_replace(["\n", "\r", " "], '', vvhanCurl('https://www.zhihu.com/hot', ['User-Agent:Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'], 'https://www.zhihu.com'));
-  preg_match('/<scriptid=\"js-initialData\"type=\"text\/json\">(.*?)<\/script>/', $_resHtml, $_resHtmlArr);
-  $jsonRes = json_decode($_resHtmlArr[1], true);
-  $tempArr = [];
-  foreach ($jsonRes['initialState']['topstory']['hotList'] as $k => $v) {
-    array_push($tempArr, [
-      'index' => $k + 1,
-      'title' => $v['target']['titleArea']['text'],
-      'desc' => $v['target']['excerptArea']['text'],
-      'pic' =>  $v['target']['imageArea']['url'],
-      'hot' => $v['target']['metricsArea']['text'],
-      'url' => $v['target']['link']['url'],
-      'mobilUrl' => $v['target']['link']['url']
-    ]);
+  // 知乎热榜  热度
+  public function zhihuHot()
+  {
+    $jsonRes = json_decode($this->Curl('https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&desktop=true', null, null, "https://www.zhihu.com"), true);
+    $tempArr = [];
+    foreach ($jsonRes['data'] as $k => $v) {
+      preg_match('/\d+/',  $v['detail_text'], $hot);
+      array_push($tempArr, [
+        'index' => $k + 1,
+        'title' => $v['target']['title'],
+        'hot' => $hot[0].'万',
+        'url' => 'https://www.zhihu.com/question/'.urlencode($v['target']['id']),
+        'mobilUrl' => 'https://www.zhihu.com/question/'.urlencode($v['target']['id'])
+      ]);
+    }
+    return [
+      'success' => true,
+      'title' => '知乎热榜',
+      'subtitle' => '热度',
+      'update_time' => date('Y-m-d h:i:s', time()),
+      'data' => $tempArr
+    ];
   }
   return [
     'success' => true,
